@@ -1,0 +1,337 @@
+version: '3.8'
+services:
+
+  order-service-mysql:
+    image: eventuateio/eventuate-vanilla-mysql8:${EVENTUATE_COMMON_VERSION?}
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_USER=mysqluser
+      - MYSQL_PASSWORD=mysqlpw
+      - EVENTUATE_OUTBOX_TABLES=${EVENTUATE_OUTBOX_TABLES}
+      - MYSQL_DATABASE=order_service
+  order-service:
+    container_name: order-service
+    env_file:
+      - ${ENV_FILE:-docker-compose-env-files/empty.env}
+    build:
+      context: ./cr-order-service/
+      args:
+        serviceImageVersion: ${SERVICE_IMAGE_VERSION}
+        baseImageVersion: ${EVENTUATE_JAVA_BASE_IMAGE_VERSION}
+    depends_on:
+      - order-service-mysql
+      - kafka
+      - zookeeper
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://order-service-mysql/order_service
+      SPRING_DATASOURCE_USERNAME: mysqluser
+      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+      EVENTUATE_TRAM_OUTBOX_PARTITIONING_OUTBOX_TABLES: ${EVENTUATE_OUTBOX_TABLES}
+      EVENTUATE_DATABASE_SCHEMA: none
+      SERVER_PORT: 8080
+
+
+  voucher-service-mysql:
+    image: eventuateio/eventuate-vanilla-mysql8:${EVENTUATE_COMMON_VERSION?}
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_USER=mysqluser
+      - MYSQL_PASSWORD=mysqlpw
+      - EVENTUATE_OUTBOX_TABLES=${EVENTUATE_OUTBOX_TABLES}
+      - MYSQL_DATABASE=voucher_service
+
+  voucher-service:
+    env_file:
+      - ${ENV_FILE:-docker-compose-env-files/empty.env}
+    build:
+      context: ./cr-voucher-service/
+      args:
+        serviceImageVersion: ${SERVICE_IMAGE_VERSION}
+        baseImageVersion: ${EVENTUATE_JAVA_BASE_IMAGE_VERSION}
+    depends_on:
+      - voucher-service-mysql
+      - kafka
+      - zookeeper
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://voucher-service-mysql/voucher_service
+      SPRING_DATASOURCE_USERNAME: mysqluser
+      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+      EVENTUATE_TRAM_OUTBOX_PARTITIONING_OUTBOX_TABLES: ${EVENTUATE_OUTBOX_TABLES}
+      EVENTUATE_DATABASE_SCHEMA: none
+      SERVER_PORT: 8080
+
+
+
+  account-service-mysql:
+    image: eventuateio/eventuate-vanilla-mysql8:${EVENTUATE_COMMON_VERSION?}
+    ports:
+      - "3308:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_USER=mysqluser
+      - MYSQL_PASSWORD=mysqlpw
+      - EVENTUATE_OUTBOX_TABLES=${EVENTUATE_OUTBOX_TABLES}
+      - MYSQL_DATABASE=account_service
+
+  account-service:
+    env_file:
+      - ${ENV_FILE:-docker-compose-env-files/empty.env}
+    build:
+      context: ./cr-account-service/
+      args:
+        serviceImageVersion: ${SERVICE_IMAGE_VERSION}
+        baseImageVersion: ${EVENTUATE_JAVA_BASE_IMAGE_VERSION}
+    depends_on:
+      - account-service-mysql
+      - kafka
+      - zookeeper
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://account-service-mysql/account_service
+      SPRING_DATASOURCE_USERNAME: mysqluser
+      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+      EVENTUATE_TRAM_OUTBOX_PARTITIONING_OUTBOX_TABLES: ${EVENTUATE_OUTBOX_TABLES}
+      EVENTUATE_DATABASE_SCHEMA: none
+      SERVER_PORT: 8080
+
+  notification-service-mysql:
+    image: eventuateio/eventuate-vanilla-mysql8:${EVENTUATE_COMMON_VERSION?}
+    ports:
+      - "3309:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_USER=mysqluser
+      - MYSQL_PASSWORD=mysqlpw
+      - EVENTUATE_OUTBOX_TABLES=${EVENTUATE_OUTBOX_TABLES}
+      - MYSQL_DATABASE=notification_service
+
+  notification-service:
+    env_file:
+      - ${ENV_FILE:-docker-compose-env-files/empty.env}
+    build:
+      context: ./cr-notification-service/
+      args:
+        serviceImageVersion: ${SERVICE_IMAGE_VERSION}
+        baseImageVersion: ${EVENTUATE_JAVA_BASE_IMAGE_VERSION}
+    depends_on:
+      - notification-service-mysql
+      - kafka
+      - zookeeper
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://notification-service-mysql/notification_service
+      SPRING_DATASOURCE_USERNAME: mysqluser
+      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+      EVENTUATE_TRAM_OUTBOX_PARTITIONING_OUTBOX_TABLES: ${EVENTUATE_OUTBOX_TABLES}
+      EVENTUATE_DATABASE_SCHEMA: none
+      SERVER_PORT: 8080
+
+  user-service:
+    env_file:
+      - ${ENV_FILE:-docker-compose-env-files/empty.env}
+    build:
+      context: ./cr-user-service/
+      args:
+        serviceImageVersion: ${SERVICE_IMAGE_VERSION}
+        baseImageVersion: ${EVENTUATE_JAVA_BASE_IMAGE_VERSION}
+    environment:
+      SERVER_PORT: 8080
+
+  api-gateway:
+    env_file:
+      - ${ENV_FILE:-docker-compose-env-files/empty.env}
+    build:
+      context: ./cr-api-gateway/
+      args:
+        serviceImageVersion: ${SERVICE_IMAGE_VERSION}
+        baseImageVersion: ${EVENTUATE_JAVA_BASE_IMAGE_VERSION}
+    depends_on:
+      - keycloak
+      - notification-service
+      - account-service
+      - order-service
+      - voucher-service
+    environment:
+      APIGATEWAY_TIMEOUT_MILLIS: ${APIGATEWAY_TIMEOUT_MILLIS:-1000}
+      SERVER_PORT: 8080
+
+  voucher-history-service:
+    env_file:
+      - ${ENV_FILE:-docker-compose-env-files/empty.env}
+    build:
+      context: ./cr-voucher-history-service/
+      args:
+        serviceImageVersion: ${SERVICE_IMAGE_VERSION}
+        baseImageVersion: ${EVENTUATE_JAVA_BASE_IMAGE_VERSION}
+    depends_on:
+      - kafka
+      - zookeeper
+    environment:
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+      SERVER_PORT: 8080
+
+
+  zookeeper:
+    image: eventuateio/eventuate-zookeeper:${EVENTUATE_COMMON_VERSION?}
+    ports:
+      - 2181:2181
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      KAFKA_HEAP_OPTS: -Xmx64m
+
+  kafka:
+    image: "eventuateio/eventuate-kafka:${EVENTUATE_MESSAGING_KAFKA_IMAGE_VERSION?}"
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_LISTENERS: LC://kafka:29092,LX://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: LC://kafka:29092,LX://${DOCKER_HOST_IP:-localhost}:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LC:PLAINTEXT,LX:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LC
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_HEAP_OPTS: -Xmx192m
+
+
+  keycloak:
+    container_name: keycloak
+    build:
+      context: ./.keycloak
+    ports:
+      - "8090:8080"
+    environment:
+      KEYCLOAK_HTTP_RELATIVE_PATH: /auth
+      KEYCLOAK_DATABASE_HOST: postgres
+      KEYCLOAK_DATABASE_PASSWORD: "#3]O?4RGj)DE7Z!9SA5"
+      KEYCLOAK_ADMIN_USER: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/auth" ]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      - postgres
+
+  postgres: # https://hub.docker.com/_/postgres
+    container_name: postgres
+    image: postgres:${POSTGRES_VERSION:-14.5-alpine}
+    environment:
+      POSTGRES_DB: bitnami_keycloak
+      POSTGRES_USER: bn_keycloak
+      POSTGRES_PASSWORD: "#3]O?4RGj)DE7Z!9SA5"
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+  cdc-service:
+    image: eventuateio/eventuate-cdc-service:${EVENTUATE_CDC_VERSION?}
+    ports:
+      - "8099:8080"
+    depends_on:
+      - voucher-service-mysql
+      - notification-service-mysql
+      - account-service-mysql
+      - kafka
+      - zookeeper
+    environment:
+      CDC_OPTS: "--debug"
+
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+
+      EVENTUATE_CDC_READER_READER1_TYPE: mysql-binlog
+      EVENTUATE_CDC_READER_READER1_DATASOURCEURL: jdbc:mysql://account-service-mysql:3306/account_service
+      EVENTUATE_CDC_READER_READER1_MONITORINGSCHEMA: account_service
+      EVENTUATE_CDC_READER_READER1_DATASOURCEUSERNAME: root
+      EVENTUATE_CDC_READER_READER1_DATASOURCEPASSWORD: rootpassword
+      EVENTUATE_CDC_READER_READER1_DATASOURCEDRIVERCLASSNAME: com.mysql.cj.jdbc.Driver
+      EVENTUATE_CDC_READER_READER1_LEADERSHIPLOCKPATH: /eventuate/cdc/leader/account_service
+      EVENTUATE_CDC_READER_READER1_CDCDBUSERNAME: root
+      EVENTUATE_CDC_READER_READER1_CDCDBPASSWORD: rootpassword
+      EVENTUATE_CDC_READER_READER1_READOLDDEBEZIUMDBOFFSETSTORAGETOPIC: "false"
+      EVENTUATE_CDC_READER_READER1_MYSQLBINLOGCLIENTUNIQUEID: 1
+      EVENTUATE_CDC_READER_READER1_OFFSETSTOREKEY: MySqlBinlogAccountService
+      EVENTUATE_CDC_READER_READER1_OFFSETSTORAGETOPICNAME: db.history.common
+      EVENTUATE_CDC_READER_READER1_OUTBOXID: 1
+
+      EVENTUATE_CDC_READER_READER2_TYPE: mysql-binlog
+      EVENTUATE_CDC_READER_READER2_DATASOURCEURL: jdbc:mysql://voucher-service-mysql:3306/voucher_service
+      EVENTUATE_CDC_READER_READER2_MONITORINGSCHEMA: voucher_service
+      EVENTUATE_CDC_READER_READER2_DATASOURCEUSERNAME: root
+      EVENTUATE_CDC_READER_READER2_DATASOURCEPASSWORD: rootpassword
+      EVENTUATE_CDC_READER_READER2_DATASOURCEDRIVERCLASSNAME: com.mysql.cj.jdbc.Driver
+      EVENTUATE_CDC_READER_READER2_LEADERSHIPLOCKPATH: /eventuate/cdc/leader/voucher_service
+      EVENTUATE_CDC_READER_READER2_CDCDBUSERNAME: root
+      EVENTUATE_CDC_READER_READER2_CDCDBPASSWORD: rootpassword
+      EVENTUATE_CDC_READER_READER2_READOLDDEBEZIUMDBOFFSETSTORAGETOPIC: "false"
+      EVENTUATE_CDC_READER_READER2_MYSQLBINLOGCLIENTUNIQUEID: 2
+      EVENTUATE_CDC_READER_READER2_OFFSETSTOREKEY: MySqlBinlogVoucherService
+      EVENTUATE_CDC_READER_READER2_OFFSETSTORAGETOPICNAME: db.history.common
+      EVENTUATE_CDC_READER_READER2_OUTBOXID: 2
+
+      EVENTUATE_CDC_READER_READER3_TYPE: mysql-binlog
+      EVENTUATE_CDC_READER_READER3_DATASOURCEURL: jdbc:mysql://order-service-mysql:3306/order_service
+      EVENTUATE_CDC_READER_READER3_MONITORINGSCHEMA: order_service
+      EVENTUATE_CDC_READER_READER3_DATASOURCEUSERNAME: root
+      EVENTUATE_CDC_READER_READER3_DATASOURCEPASSWORD: rootpassword
+      EVENTUATE_CDC_READER_READER3_DATASOURCEDRIVERCLASSNAME: com.mysql.cj.jdbc.Driver
+      EVENTUATE_CDC_READER_READER3_LEADERSHIPLOCKPATH: /eventuate/cdc/leader/order_service
+      EVENTUATE_CDC_READER_READER3_CDCDBUSERNAME: root
+      EVENTUATE_CDC_READER_READER3_CDCDBPASSWORD: rootpassword
+      EVENTUATE_CDC_READER_READER3_READOLDDEBEZIUMDBOFFSETSTORAGETOPIC: "false"
+      EVENTUATE_CDC_READER_READER3_MYSQLBINLOGCLIENTUNIQUEID: 3
+      EVENTUATE_CDC_READER_READER3_OFFSETSTOREKEY: MySqlBinlogOrderService
+      EVENTUATE_CDC_READER_READER3_OFFSETSTORAGETOPICNAME: db.history.common
+      EVENTUATE_CDC_READER_READER3_OUTBOXID: 3
+
+
+
+      EVENTUATE_CDC_PIPELINE_PIPELINE1_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_PIPELINE1_READER: reader1
+      EVENTUATE_CDC_PIPELINE_PIPELINE1_EVENTUATEDATABASESCHEMA: account_service
+
+      EVENTUATE_CDC_PIPELINE_PIPELINE2_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_PIPELINE2_READER: reader2
+      EVENTUATE_CDC_PIPELINE_PIPELINE2_EVENTUATEDATABASESCHEMA: voucher_service
+
+      EVENTUATE_CDC_PIPELINE_PIPELINE3_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_PIPELINE3_READER: reader3
+      EVENTUATE_CDC_PIPELINE_PIPELINE3_EVENTUATEDATABASESCHEMA: order_service
+
+
+
+
+  mongo:
+    image: mongo:5.0.0-rc1
+    container_name: mongodb
+    ports:
+      - '27017:27017'
+
+
+volumes:
+  postgres:

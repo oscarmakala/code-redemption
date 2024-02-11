@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: code-redemption
+  labels:
+    app: notification-service
+spec:
+  selector:
+    matchLabels:
+      app: notification-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: docker.io/makalaoscar/oscar-docker:cr-notification-service
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: config
+              mountPath: /workspace/config
+              readOnly: true
+          ports:
+            - containerPort: 80
+          #          livenessProbe:
+          #            httpGet:
+          #              path: /management/health
+          #              port: 80
+          #            initialDelaySeconds: 45
+          #          readinessProbe:
+          #            httpGet:
+          #              path: /management/info
+          #              port: 80
+          #            initialDelaySeconds: 45
+          env:
+            - name: SERVER_PORT
+              value: '80'
+            - name: SPRING_CLOUD_CONFIG_ENABLED
+              value: 'false'
+      imagePullSecrets:
+        - name: docker-secret-registry
+      volumes:
+        - name: config
+          configMap:
+            name: notification-service
+            items:
+              - key: application.yaml
+                path: application.yaml

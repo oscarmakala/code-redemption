@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: voucher-service
+  namespace: code-redemption
+  labels:
+    app: voucher-service
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: voucher-service

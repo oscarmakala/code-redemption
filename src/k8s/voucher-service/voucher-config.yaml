@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: voucher-service
+  namespace: code-redemption
+  labels:
+    app: voucher-service
+data:
+  application.yaml: |-
+    spring:
+      application:
+        name: cr-voucher-service
+      datasource:
+        url: jdbc:mysql://172.16.115.6:3306/cr_voucher_service
+        username: cr_voucher_service_user
+        password: cr_voucher_service_password
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          max-lifetime: 10
+      jpa:
+        generate-ddl: true
+      security:
+        oauth2:
+          resourceserver:
+            jwt:
+              jwk-set-uri: http://keycloak:8080/auth/realms/azamCodeRedemption/protocol/openid-connect/certs
+    eventuatelocal:
+      kafka:
+        bootstrap:
+          servers: kafka:9092
+      zookeeper:
+        connection:
+          string: zookeeper:2181
+    eventuate:
+      database:
+        schema: cr_voucher_service
+    logging:
+      level:
+        org.springframework.orm.jpa: INFO
+        org.hibernate.SQL: INFO
+        io.eventuate: DEBUG
+        io.eventuate.tram: INFO
+        com.divforce.cr: DEBUG
+    server:
+      port: 9877

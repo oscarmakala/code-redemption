@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: cr-voucher-history-service
+  data:
+    mongodb:
+      uri: mongodb://${DOCKER_HOST_IP:localhost}:27017/VoucherHistoryDb
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://${DOCKER_HOST_IP:localhost}:8090/auth/realms/azamCodeRedemption/protocol/openid-connect/certs
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+management:
+  endpoint:
+    health:
+      show-details: always
+logging:
+  level:
+    org.springframework.orm.jpa: INFO
+    org.hibernate.SQL: INFO
+    io.eventuate: INFO
+    io.eventuate.tram: INFO
+    com.divforce.cr: INFO
+
+eventuatelocal:
+  kafka:
+    bootstrap:
+      servers: ${DOCKER_HOST_IP:localhost}:9092
+  zookeeper:
+    connection:
+      string: ${DOCKER_HOST_IP:localhost}:2181
+server:
+  port: 3333

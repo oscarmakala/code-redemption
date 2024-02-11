@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: order-service
+  namespace: code-redemption
+  labels:
+    app: order-service
+data:
+  application.yaml: |-
+    spring:
+      application:
+        name: cr-order-service
+      datasource:
+        url: jdbc:mysql://172.16.115.6:3306/cr_order_service
+        username: cr_order_service_user
+        password: cr_order_service_password
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          max-lifetime: 10
+      jpa:
+        generate-ddl: true
+      security:
+        oauth2:
+          resourceserver:
+            jwt:
+              jwk-set-uri: http://keycloak:8080/auth/realms/azamCodeRedemption/protocol/openid-connect/certs
+      sleuth:
+        sampler:
+          probability: 1.0
+    eventuatelocal:
+      kafka:
+        bootstrap:
+          servers: kafka:29092
+      zookeeper:
+        connection:
+          string: kafka-zk:2181
+    eventuate:
+      database:
+        schema: cr_order_service
+    logging:
+      level:
+        org.springframework.orm.jpa: INFO
+        org.hibernate.SQL: INFO
+        io.eventuate: INFO
+        io.eventuate.tram: INFO
+        com.divforce.cr: DEBUG
+    server:
+      port: 9876
+
+    notification:
+      voucher_not_found_sw: Ndugu mteja namba yako ya bahati haijafanikiwa. Endelea kununua vinywaji vya azam uweze kupata rejesho kwenye akaunti yako ya Azampesa na ufuruhie huduma zetu.
+
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,prometheus,beans,endpoints
+      endpoint:
+        health:
+          show-details: always

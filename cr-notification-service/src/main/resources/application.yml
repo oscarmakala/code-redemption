@@ -1,0 +1,79 @@
+spring:
+  application:
+    name: cr-notification-service
+  datasource:
+    url: jdbc:mysql://${DOCKER_HOST_IP:localhost}:3309/notification_service
+    username: mysqluser
+    password: mysqlpw
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      initialization-fail-timeout: 30000
+      max-lifetime: 1800000
+  jpa:
+    generate-ddl: true
+
+  flyway:
+    locations: classpath:flyway/{vendor}
+    baseline-on-migrate: true
+    baseline-version: 0
+
+eventuatelocal:
+  kafka:
+    bootstrap:
+      servers: ${DOCKER_HOST_IP:localhost}:9092
+  zookeeper:
+    connection:
+      string: ${DOCKER_HOST_IP:localhost}:2181
+
+eventuate:
+  database:
+    schema: none
+logging:
+  level:
+    org.springframework.orm.jpa: INFO
+    org.hibernate.SQL: INFO
+    io.eventuate: INFO
+    io.eventuate.tram: INFO
+    com.divforce.cr: INFO
+server:
+  port: 9875
+
+
+notification:
+  #endpoint: https://g8x2j.api.infobip.com/sms/2/text/advanced
+  endpoint: https://divforce.free.beeceptor.com/codedisburse/1.0.0
+  headers:
+    Authorization: App f55987828ca82b8559f2a9f7291d0c49-d6d973b0-105b-424c-9372-4103386f0de5
+  template: |
+    {
+        "messages": [
+            {
+                "from": "AzamPesa",
+                "destinations": [
+                    {
+                        "to": "#{msisdn}"
+                    }
+                ],
+                "text": "#{text}"
+            }
+        ]
+    }
+  messages:
+    voucher_already_used:
+      en: Dear customer your lucky number has been used. Keep buying azam drinks so you can get a refund on your Azampesa account and enjoy our services.
+      sw: Ndugu mteja namba yako ya bahati imeshatumika. Endelea kununua vinywaji vya Azam uweze kupata rejesho kwenye akaunti yako ya Azampesa na ufuruhie huduma zetu.
+    campaign_not_active:
+      en: Dear customer your lucky number has not been successful. Keep buying azam drinks so you can get a refund on your Azampesa account and enjoy our services.
+      sw: Ndugu mteja namba yako ya bahati haijafanikiwa. Endelea kununua vinywaji vya azam uweze kupata rejesho kwenye akaunti yako ya Azampesa na ufuruhie huduma zetu.
+    no_such_voucher:
+      en: Dear customer your lucky number has not been successful. Keep buying azam drinks so you can get a refund on your Azampesa account and enjoy our services.
+      sw: Ndugu mteja namba yako ya bahati haijafanikiwa. Endelea kununua vinywaji vya Azam uweze kupata rejesho kwenye akaunti yako ya Azampesa.
+    voucher_expired:
+      en: Dear customer your lucky number has not been successful. Keep buying azam drinks so you can get a refund on your Azampesa account and enjoy our services.
+      sw: Ndugu mteja namba yako ya bahati haijafanikiwa. Endelea kununua vinywaji vya Azam uweze kupata rejesho kwenye akaunti yako ya Azampesa.
+    voucher_redeemed:
+      en: Congratulations! You have been refunded Tsh {0,number}  to your Azampesa account. Dial *150*08# to use Azampesa and enjoy our services
+      sw: Hongera! umerudishiwa Tsh {0,number} kwenye akaunti yako ya azampesa.Bonyeza *150*08# kutumia Azampesa na ufurahie huduma zetu.
+    system_failure:
+      en: Dear Customer please try again later , service is currently  not avaibale
+      sw: Ndugu Mteja jaribu tena baadae, huduma haipatikani kwa sasa

@@ -1,0 +1,3 @@
+[submodule "code-redemption-ui"]
+	path = code-redemption-ui
+	url = https://omakala@bitbucket.org/24tech/code-redemption-ui.git

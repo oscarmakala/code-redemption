@@ -1,0 +1,50 @@
+version: '3.8'
+services:
+  api-gateway:
+    image: docker.io/makalaoscar/oscar-docker:cr-api-gateway
+    hostname: api-gateway
+    networks:
+      - coderedemption
+    ports:
+      - "7070:7070"
+    depends_on:
+      - keycloak
+    environment:
+      spring.security.oauth2.client.registration.keycloak.client-secret: Fc6h3G4eMLtTMMoMbQrKp3yw7wX1BMR3
+      spring.security.oauth2.client.provider.keycloak.issuer-uri: http://172.16.115.5:8080/auth/realms/azamCodeRedemption
+
+      SPRING.CLOUD.GATEWAY.ROUTES[0].ID: voucher_path
+      SPRING.CLOUD.GATEWAY.ROUTES[0].URI: http://voucher-service:9877
+      SPRING.CLOUD.GATEWAY.ROUTES[0].PREDICATES[0]: Path=/campaigns/**,/vouchers/**
+      SPRING.CLOUD.GATEWAY.ROUTES[0].FILTERS[0]: TokenRelay=
+      SPRING.CLOUD.GATEWAY.ROUTES[0].FILTERS[1]: RemoveRequestHeader=Cookie
+
+      SPRING.CLOUD.GATEWAY.ROUTES[1].ID: user_path
+      SPRING.CLOUD.GATEWAY.ROUTES[1].URI: http://user-service:2678
+      SPRING.CLOUD.GATEWAY.ROUTES[1].PREDICATES[0]: Path=/security/**
+      SPRING.CLOUD.GATEWAY.ROUTES[1].FILTERS[0]: TokenRelay=
+      SPRING.CLOUD.GATEWAY.ROUTES[1].FILTERS[1]: RemoveRequestHeader=Cookie
+
+      SPRING.CLOUD.GATEWAY.ROUTES[2].ID: voucher_history
+      SPRING.CLOUD.GATEWAY.ROUTES[2].URI: http://voucher-history-service:3333
+      SPRING.CLOUD.GATEWAY.ROUTES[2].PREDICATES[0]: Path=/voucher-history/**
+      SPRING.CLOUD.GATEWAY.ROUTES[2].FILTERS[0]: TokenRelay=
+      SPRING.CLOUD.GATEWAY.ROUTES[2].FILTERS[1]: RemoveRequestHeader=Cookie
+
+      SPRING.CLOUD.GATEWAY.ROUTES[3].ID: payment_path
+      SPRING.CLOUD.GATEWAY.ROUTES[3].URI: http://account-service:9878
+      SPRING.CLOUD.GATEWAY.ROUTES[3].PREDICATES[0]: Path=/payments/**
+      SPRING.CLOUD.GATEWAY.ROUTES[3].FILTERS[0]: TokenRelay=
+      SPRING.CLOUD.GATEWAY.ROUTES[3].FILTERS[1]: RemoveRequestHeader=Cookie
+
+      SPRING.CLOUD.GATEWAY.ROUTES[4].ID: order_path
+      SPRING.CLOUD.GATEWAY.ROUTES[4].URI: http://order-service:9876
+      SPRING.CLOUD.GATEWAY.ROUTES[4].PREDICATES[0]: Path=/orders/**
+      SPRING.CLOUD.GATEWAY.ROUTES[4].FILTERS[0]: TokenRelay=
+      SPRING.CLOUD.GATEWAY.ROUTES[4].FILTERS[1]: RemoveRequestHeader=Cookie
+
+
+
+networks:
+  coderedemption:
+    external: true

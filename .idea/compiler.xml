@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="cr-voucher-history-service" />
+        <module name="cr-encrypt-util" />
+        <module name="cr-security-common" />
+        <module name="disbursement-azam-pay" />
+        <module name="cr-notification-service" />
+        <module name="cr-account-service" />
+        <module name="cr-user-service" />
+        <module name="cr-audit" />
+        <module name="cr-voucher-service" />
+        <module name="cr-api-gateway" />
+        <module name="cr-voucher-history-service-api" />
+        <module name="cr-voucher-service-api" />
+        <module name="cr-order-service-api" />
+        <module name="cr-common" />
+        <module name="cr-order-service" />
+        <module name="cr-account-service-api" />
+        <module name="disbursement-common" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="azampay-disbursement" target="11" />
+      <module name="code-redemption-ui" target="1.8" />
+      <module name="cr-common-security" target="11" />
+      <module name="cr-frontend" target="11" />
+      <module name="kafka-http" target="11" />
+      <module name="redemption-core" target="11" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="azampay-disbursement" options="-parameters" />
+      <module name="cr-account-service" options="-parameters" />
+      <module name="cr-account-service-api" options="-parameters" />
+      <module name="cr-api-gateway" options="-parameters" />
+      <module name="cr-audit" options="-parameters" />
+      <module name="cr-common" options="-parameters" />
+      <module name="cr-common-security" options="-parameters" />
+      <module name="cr-encrypt-util" options="-parameters" />
+      <module name="cr-frontend" options="-parameters" />
+      <module name="cr-notification-service" options="-parameters" />
+      <module name="cr-order-service" options="-parameters" />
+      <module name="cr-order-service-api" options="-parameters" />
+      <module name="cr-security-common" options="-parameters" />
+      <module name="cr-user-service" options="-parameters" />
+      <module name="cr-voucher-history-service" options="-parameters" />
+      <module name="cr-voucher-history-service-api" options="-parameters" />
+      <module name="cr-voucher-service" options="-parameters" />
+      <module name="cr-voucher-service-api" options="-parameters" />
+      <module name="disbursement-azam-pay" options="-parameters" />
+      <module name="disbursement-common" options="-parameters" />
+      <module name="kafka-http" options="-parameters" />
+      <module name="redemption-core" options="-parameters" />
+    </option>
+  </component>
+</project>

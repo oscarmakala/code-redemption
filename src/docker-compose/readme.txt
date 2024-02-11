@@ -1,0 +1,1 @@
+docker run --rm quay.io/mongodb/charts:19.12.2 charts-cli test-connection 'mongodb://admin:admin12@host.docker.internal'

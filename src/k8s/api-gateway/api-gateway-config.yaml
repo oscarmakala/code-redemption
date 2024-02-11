@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway
+  namespace: code-redemption
+  labels:
+    app: api-gateway
+data:
+  application.yaml: |-
+    spring:
+      application:
+        name: api-gateway
+      cloud:
+        gateway:
+          routes:
+            - id: voucher_path
+              uri: http://voucher-service
+              predicates:
+                - Path=/campaigns/**,/vouchers/**
+              filters:
+                - TokenRelay=
+                - RemoveRequestHeader=Cookie
+            - id: user_path
+              uri: http://user-service
+              predicates:
+                - Path=/security/**
+              filters:
+                - TokenRelay=
+                - RemoveRequestHeader=Cookie
+            - id: voucher_history
+              uri: http://voucher-history-service
+              predicates:
+                - Path=/voucher-history/**
+              filters:
+                - TokenRelay=
+                - RemoveRequestHeader=Cookie
+            - id: payment_path
+              uri: http://account-service
+              predicates:
+                - Path=/payments/**
+              filters:
+                - TokenRelay=
+                - RemoveRequestHeader=Cookie
+            - id: order_path
+              uri: http://order-service
+              predicates:
+                - Path=/orders/**
+              filters:
+                - TokenRelay=
+                - RemoveRequestHeader=Cookie
+        coderedeem:
+          security:
+            authorization:
+              enabled: true
+              loginUrl: "/"
+              permit-all-paths: "/authenticate,/security/info,/assets/**,/dashboard/logout-success-oauth.html,/favicon.ico"
+              rules:
+                - GET    /about                          =>  ROLE_VIEW
+      security:
+        oauth2:
+          client:
+            registration:
+              keycloak:
+                client-id: codeRedemptionAuth
+                client-secret: 99bcf11a-5d30-4e7b-a4ec-90b62761e2b8
+                authorization-grant-type: authorization_code
+                redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+                scope: openid,email,profile
+            provider:
+              keycloak:
+                issuer-uri: http://keycloak:8080/auth/realms/azamCodeRedemption
+      sleuth:
+        sampler:
+          probability: 1.0
+    logging:
+      level:
+        org.springframework.web: DEBUG
+        org.springframework.cloud: DEBUG
+        org.springframework.security: DEBUG
+        org.springframework.security.oauth2: DEBUG

@@ -1,0 +1,49 @@
+version: '3.8'
+services:
+  traefik:
+    image: "traefik:v2.7.0-rc2"
+    ports:
+      - "80:80"
+      # :8080 is where the dashboard runs on
+      - "8080:8080"
+      - "443:443"
+    deploy:
+      labels:
+        # Enable Traefik for this service, to make it available in the public network
+        - traefik.enable=true
+        # Use the traefik-public network (declared below)
+        - traefik.docker.network=coderedemption
+        # Use the custom label "traefik.constraint-label=traefik-public"
+        # This public Traefik will only use services with this label
+        # That way you can add other internal Traefik instances per stack if needed
+        - traefik.constraint-label=coderedemption
+        # Use the special Traefik service api@internal with the web UI/Dashboard
+        - traefik.http.routers.api.service=api@internal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - --api.insecure=true
+      - --api.dashboard=true
+      # Enable Docker in Traefik, so that it reads labels from Docker services
+      - --providers.docker
+      # Add a constraint to only use services with the label "traefik.constraint-label=coderedemption"
+      - --providers.docker.constraints=Label(`traefik.constraint-label`, `coderedemption`)
+      # Do not expose all Docker services, only the ones explicitly exposed
+      - --providers.docker.exposedbydefault=false
+      # Enable Docker Swarm mode
+      - --providers.docker.swarmmode
+      # Create an entrypoint "http" listening on port 80
+      - --entrypoints.http.address=:80
+      # Create an entrypoint "https" listening on port 443
+      - --entrypoints.https.address=:443
+      # Enable the access log, with HTTP requests
+      - --accesslog
+      # Enable the Traefik log, for configurations and errors
+      - --log
+      # Enable the Dashboard and API
+      - --api
+    networks:
+      - coderedemption
+networks:
+  coderedemption:
+    external: true

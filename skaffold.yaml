@@ -1,0 +1,31 @@
+apiVersion: skaffold/v2beta26
+kind: Config
+metadata:
+  name: code-redemption
+build:
+  artifacts:
+    - image: localhost:5000/cr-mysql
+      context: src/mysql
+      docker:
+        dockerfile: Dockerfile
+    - image: cr-account-service
+      context: cr-account-service
+      buildpacks:
+        builder: paketobuildpacks/builder:base
+  tagPolicy:
+    gitCommit: { }
+#deploy:
+#  kubectl:
+#    manifests:
+#      - src/k8s/cdc-service/cdc-deployment.yml
+#      - src/k8s/cdc-service/cdc-svc.yml
+#      - src/k8s/kafka/kafka-deployment.yaml
+#      - src/k8s/kafka/kafka-pvc.yaml
+#      - src/k8s/kafka/kafka-svc.yaml
+#      - src/k8s/kafka/kafka-zk-deployment.yaml
+#      - src/k8s/kafka/kafka-zk-pvc.yaml
+#      - src/k8s/kafka/kafka-zk-svc.yaml
+#      - src/k8s/keycloak/keycloak.yaml
+#      - src/k8s/mysql/mysql-deployment.yaml
+#      - src/k8s/mysql/mysql-pvc.yaml
+#      - src/k8s/mysql/mysql-svc.yaml

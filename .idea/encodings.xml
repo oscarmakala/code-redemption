@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/cr-account-service-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-account-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-account-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-api-gateway/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-api-gateway/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-audit/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-common/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-encrypt-util/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-notification-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-notification-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-order-service-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-order-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-order-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-security-common/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-user-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-user-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-voucher-history-service-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-voucher-history-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-voucher-history-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-voucher-service-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-voucher-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cr-voucher-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/disbursement-azam-pay/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/disbursement-common/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
+  </component>
+</project>

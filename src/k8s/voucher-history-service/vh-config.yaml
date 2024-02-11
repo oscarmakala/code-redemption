@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: voucher-history-service
+  namespace: code-redemption
+  labels:
+    app: voucher-history-service
+data:
+  application.yaml: |-
+    spring:
+      application:
+        name: voucher-history-service
+      data:
+        mongodb:
+          uri: mongodb://codeRedemption:FLRFMXT4GD2gCc5AVjYu@172.16.112.31:27017,172.16.112.32:27017,172.16.112.33:27017/VoucherHistoryDb?readPreference=secondaryPreferred&ssl=false&authSource=admin
+      security:
+        oauth2:
+          resourceserver:
+            jwt:
+              jwk-set-uri: http://keycloak:8080/auth/realms/azamCodeRedemption/protocol/openid-connect/certs
+      jackson:
+        serialization:
+          WRITE_DATES_AS_TIMESTAMPS: false
+    management:
+      endpoint:
+        health:
+          show-details: always
+    logging:
+      level:
+        org.springframework.orm.jpa: DEBUG
+        org.hibernate.SQL: DEBUG
+        io.eventuate: DEBUG
+        io.eventuate.tram: DEBUG
+        com.divforce.cr: DEBUG
+
+    eventuatelocal:
+      kafka:
+        bootstrap:
+          servers: kafka:29092
+      zookeeper:
+        connection:
+          string: zookeeper:2181

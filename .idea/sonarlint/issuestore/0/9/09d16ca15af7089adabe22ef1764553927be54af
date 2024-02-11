@@ -1,0 +1,11 @@
+
+k
+java:S2259"KA "NullPointerException" could be thrown; "getAttribute()" can return null.(¾ªĞÿÿÿÿÿ8ÑĞ¥˜/
+k
+java:S2259"KA "NullPointerException" could be thrown; "getAttribute()" can return null.(ƒ»›¨ùÿÿÿÿ8ÒĞ¥˜/
+O
+java:S6212"/Declare this local variable with "var" instead.(Ó›ÍÄúÿÿÿÿ8„Ê¥˜/
+V
+java:S4838"6Change "Object" to the type handled by the Collection.(ºˆ†±üÿÿÿÿ8ôĞ¥˜/
+O
+java:S6212"/Declare this local variable with "var" instead.(ş®¡üÿÿÿÿ8õĞ¥˜/

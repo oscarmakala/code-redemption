@@ -1,0 +1,41 @@
+version: '3.8'
+services:
+  fluentd:
+    image: docker.io/makalaoscar/oscar-docker:fluentd
+    networks:
+      - coderedemption
+    volumes:
+      - /opt/coderedemption/fluentd/conf:/fluentd/etc
+    depends_on:
+      - "elasticsearch"
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.13.1
+    container_name: elasticsearch
+    networks:
+      - coderedemption
+    environment:
+      - "discovery.type=single-node"
+    expose:
+      - "9200"
+    ports:
+      - "9200:9200"
+    volumes:
+      - /opt/coderedemption/esdata:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.13.1
+    networks:
+      - coderedemption
+    depends_on:
+      - "elasticsearch"
+    volumes:
+      - /opt/coderedemption/kibanadata:/usr/share/kibana/data
+    ports:
+      - "5601:5601"
+
+networks:
+  coderedemption:
+    external: true

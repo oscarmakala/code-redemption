@@ -1,0 +1,79 @@
+spring:
+  application:
+    name: cr-api-gateway
+  cloud:
+    gateway:
+      routes:
+#        - id: dashboard-redirect
+#          uri: classpath:/public/dashboard/index.html
+#          predicates:
+#            - Path=/dashboard
+
+
+        - id: voucher_path
+          uri: http://${DOCKER_HOST_IP:localhost}:9877
+          predicates:
+            - Path=/campaigns/**,/vouchers/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: user_path
+          uri: http://${DOCKER_HOST_IP:localhost}:2678
+          predicates:
+            - Path=/security/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: voucher_history
+          uri: http://${DOCKER_HOST_IP:localhost}:3333
+          predicates:
+            - Path=/voucher-history/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: payment_path
+          uri: http://${DOCKER_HOST_IP:localhost}:9878
+          predicates:
+            - Path=/payments/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: order_path
+          uri: http://${DOCKER_HOST_IP:localhost}:9876
+          predicates:
+            - Path=/orders/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+    coderedeem:
+      security:
+        authorization:
+          enabled: true
+          loginUrl: "/"
+          permit-all-paths: "/authenticate,/security/**,/assets/**,/dashboard/logout-success-oauth.html,/favicon.ico"
+          rules:
+            - GET    /about                          =>  ROLE_VIEW
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: codeRedemptionAuth
+            client-secret: a3E1T9JL4BIEVb57CSvpn2hobp76KVIc
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid,email,profile
+        provider:
+          keycloak:
+            issuer-uri: http://${DOCKER_HOST_IP:localhost}:8090/auth/realms/azamCodeRedemption
+
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.cloud: INFO
+    org.springframework.security: INFO
+    org.springframework.security.oauth2: INFO
+server:
+  port: 7070
+debug: false

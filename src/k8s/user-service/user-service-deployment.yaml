@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: code-redemption
+  labels:
+    app: user-service
+spec:
+  selector:
+    matchLabels:
+      app: user-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: docker.io/makalaoscar/oscar-docker:cr-user-service
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: config
+              mountPath: /workspace/config
+              readOnly: true
+          ports:
+            - containerPort: 80
+          #          livenessProbe:
+          #            httpGet:
+          #              path: /management/health
+          #              port: 80
+          #            initialDelaySeconds: 45
+          #          readinessProbe:
+          #            httpGet:
+          #              path: /management/info
+          #              port: 80
+          #            initialDelaySeconds: 45
+          env:
+            - name: SERVER_PORT
+              value: '80'
+            - name: SPRING_CLOUD_CONFIG_ENABLED
+              value: 'false'
+      imagePullSecrets:
+        - name: docker-secret-registry
+      volumes:
+        - name: config
+          configMap:
+            name: user-service
+            items:
+              - key: application.yaml
+                path: application.yaml

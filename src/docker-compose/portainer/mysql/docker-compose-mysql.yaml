@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  mariadb:
+    image: eventuateio/eventuate-mariadb:0.15.0.BUILD-SNAPSHOT
+    networks:
+      - coderedemption
+    ports:
+      - '3306:3306'
+    volumes:
+      - /opt/coderedemption/mariadb:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "Root@@123"
+      MYSQL_USER: mysqluser
+      MYSQL_PASSWORD: "Mysqlpw@@123"
+      MYSQL_LOG_CONSOLE: "true"
+      USE_DB_ID: "true"
+      USE_JSON_PAYLOAD_AND_HEADERS: "true"
+    command: --lower_case_table_names=1
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: "mysqladmin -pRoot@@123 ping -h localhost"
+      interval: 20s
+      start_period: 10s
+      timeout: 10s
+      retries: 3
+
+
+networks:
+  coderedemption:
+    external: true

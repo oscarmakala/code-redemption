@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:5.0.6
+    hostname: mongo
+    command: --wiredTigerCacheSizeGB 3
+    ports:
+      - '27017:27017'
+    volumes:
+      - /opt/coderedemption/mongod:/data/db
+    networks:
+      - coderedemption
+  charts:
+    image: quay.io/mongodb/charts:v1.20.2
+    hostname: charts
+    ports:
+      - "801:80"
+      - "4431:443"
+    networks:
+      - coderedemption
+    volumes:
+      - keys:/mongodb-charts/volumes/keys
+      - logs:/mongodb-charts/volumes/logs
+      - db-certs:/mongodb-charts/volumes/db-certs
+      - web-certs:/mongodb-charts/volumes/web-certs
+    environment:
+      CHARTS_SUPPORT_WIDGET_AND_METRICS: 'on'
+      SSL_CERT_DIR: /mongodb-charts/volumes/db-certs
+      CHARTS_MONGODB_URI: mongodb://mongo:27017
+
+volumes:
+  keys:
+  logs:
+  db-certs:
+  web-certs:
+
+secrets:
+  charts-mongodb-uri:
+    external: true
+
+networks:
+  coderedemption:
+    external: true

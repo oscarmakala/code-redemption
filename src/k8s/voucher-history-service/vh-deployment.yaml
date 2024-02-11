@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voucher-history-service
+  namespace: code-redemption
+  labels:
+    app: voucher-history-service
+spec:
+  selector:
+    matchLabels:
+      app: voucher-history-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: voucher-history-service
+    spec:
+      containers:
+        - name: voucher-history-service
+          image: docker.io/makalaoscar/oscar-docker:cr-voucher-history-service
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: config
+              mountPath: /workspace/config
+              readOnly: true
+          ports:
+            - containerPort: 80
+#          livenessProbe:
+#            httpGet:
+#              path: /management/health
+#              port: 80
+#            initialDelaySeconds: 45
+#          readinessProbe:
+#            httpGet:
+#              path: /management/info
+#              port: 80
+#            initialDelaySeconds: 45
+          env:
+            - name: SERVER_PORT
+              value: '80'
+      imagePullSecrets:
+        - name: docker-secret-registry
+      volumes:
+        - name: config
+          configMap:
+            name: voucher-history-service
+            items:
+              - key: application.yaml
+                path: application.yaml

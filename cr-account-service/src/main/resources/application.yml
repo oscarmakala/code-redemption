@@ -1,0 +1,81 @@
+spring:
+  application:
+    name: cr-account-service
+  datasource:
+    url: jdbc:mysql://${DOCKER_HOST_IP:localhost}:3308/account_service
+    username: mysqluser
+    password: mysqlpw
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      initialization-fail-timeout: 30000
+      max-lifetime: 1800000
+  jpa:
+    generate-ddl: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://${DOCKER_HOST_IP:localhost}:8090/auth/realms/azamCodeRedemption/protocol/openid-connect/certs
+  flyway:
+    locations: classpath:flyway/{vendor}
+    baseline-on-migrate: true
+    baseline-version: 0
+
+eventuatelocal:
+  kafka:
+    bootstrap:
+      servers: ${DOCKER_HOST_IP:localhost}:9092
+  zookeeper:
+    connection:
+      string: ${DOCKER_HOST_IP:localhost}:2181
+
+eventuate:
+  database:
+    schema: none
+
+
+logging:
+  level:
+    org.springframework.orm.jpa: INFO
+    org.hibernate.SQL: INFO
+    io.eventuate: INFO
+    io.eventuate.tram: INFO
+    com.divforce.cr: INFO
+
+vendors:
+  disbursement:
+    endpoint: https://divforce.free.beeceptor.com/codedisburse/1.0.0
+    headers:
+      Authorization: "Bearer 6b50540b-b360-3970-92fd-88e3b4e4429e"
+    responseMap:
+      externalTxnOne: transactionId
+      externalTxnTwo: serviceRequestId
+      transactionStatus: status
+      message: message
+    template: |
+      {
+        "serviceCode": "CASHIN",
+        "bearerCode": "USSD",
+        "transactionAmount": "#{amount}",
+        "currency": "101",
+        "externalReferenceId": "#{transactionId}",
+        "source": "CODE_REDEMPTION",
+        "remarks": "CashIn",
+        "transactionMode": "transactionMode",
+        "initiator": "transactor",
+        "language": "en",
+        "transactor": {
+          "idType": "mobileNumber",
+          "idValue": "7701536457",
+          "productId": "12",
+          "mpin": "1357",
+          "tpin": "1357"
+        },
+        "receiver": {
+          "idType": "mobileNumber",
+          "idValue": "#{mobile}",
+          "productId": "12"
+        }
+      }
+server:
+  port: 9878

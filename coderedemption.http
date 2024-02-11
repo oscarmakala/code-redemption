@@ -1,0 +1,9 @@
+POST http://localhost:9876/orders
+Content-Type: application/json
+
+{
+  "type": "TEST",
+  "trxId": "{{$random.uuid}}",
+  "code": "T7HKCSF",
+  "msisdn": "0785670105"
+}

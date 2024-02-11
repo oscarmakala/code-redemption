@@ -1,0 +1,379 @@
+version: '3.3'
+services:
+  mariadb:
+    image: eventuateio/eventuate-mariadb:0.15.0.BUILD-SNAPSHOT
+    ports:
+      - '3306:3306'
+    volumes:
+      - /opt/coderedemption/mariadb:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "Root@@123"
+      MYSQL_USER: mysqluser
+      MYSQL_PASSWORD: "Mysqlpw@@123"
+      MYSQL_LOG_CONSOLE: "true"
+      USE_DB_ID: "true"
+      USE_JSON_PAYLOAD_AND_HEADERS: "true"
+    command: --lower_case_table_names=1
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  kafka:
+    image: eventuateio/eventuate-kafka:0.15.0.BUILD-SNAPSHOT
+    hostname: kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_LISTENERS: LC://kafka:29092,LX://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: LC://kafka:29092,LX://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LC:PLAINTEXT,LX:PLAINTEXT
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_INTER_BROKER_LISTENER_NAME: LC
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_ZOOKEEPER_CONNECTION_TIMEOUT_MS: 60000
+      KAFKA_HEAP_OPTS: -Xmx192m
+      KAFKA_LOG4J_ROOT_LOGLEVEL: ERROR
+      KAFKA_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.apache.kafka=ERROR,kafka=ERROR,kafka.cluster=ERROR,kafka.controller=ERROR,kafka.coordinator=ERROR,kafka.log=ERROR,kafka.server=ERROR,kafka.zookeeper=ERROR,state.change.logger=ERROR
+    volumes:
+      - /opt/coderedemption/zookeeper:/var/lib/zookeeper/data
+  zookeeper:
+    image: eventuateio/eventuate-zookeeper:0.15.0.BUILD-SNAPSHOT
+    hostname: zookeeper
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
+    volumes:
+      - /opt/coderedemption/kafka:/var/lib/kafka/data
+
+  cdc-service:
+    image: eventuateio/eventuate-cdc-service:0.13.0.BUILD-SNAPSHOT
+    container_name: coderedemption-cdc-service
+    depends_on:
+      - mariadb
+      - kafka
+      - zookeeper
+    environment:
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+
+      EVENTUATE_CDC_PIPELINE_PIPELINE1_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_PIPELINE1_READER: reader1
+      EVENTUATE_CDC_PIPELINE_PIPELINE1_EVENTUATEDATABASESCHEMA: cr_voucher_service
+
+      EVENTUATE_CDC_PIPELINE_PIPELINE2_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_PIPELINE2_READER: reader1
+      EVENTUATE_CDC_PIPELINE_PIPELINE2_EVENTUATEDATABASESCHEMA: cr_order_service
+
+      EVENTUATE_CDC_PIPELINE_PIPELINE3_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_PIPELINE3_READER: reader1
+      EVENTUATE_CDC_PIPELINE_PIPELINE3_EVENTUATEDATABASESCHEMA: cr_account_service
+
+      EVENTUATE_CDC_PIPELINE_PIPELINE4_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_PIPELINE4_READER: reader1
+      EVENTUATE_CDC_PIPELINE_PIPELINE4_EVENTUATEDATABASESCHEMA: cr_notification_service
+
+      EVENTUATE_CDC_READER_READER1_TYPE: mysql-binlog
+      EVENTUATE_CDC_READER_READER1_DATASOURCEURL: jdbc:mysql://mariadb:3306/eventuate
+      EVENTUATE_CDC_READER_READER1_DATASOURCEUSERNAME: root
+      EVENTUATE_CDC_READER_READER1_DATASOURCEPASSWORD: "Root@@123"
+      EVENTUATE_CDC_READER_READER1_DATASOURCEDRIVERCLASSNAME: com.mysql.jdbc.Driver
+      EVENTUATE_CDC_READER_READER1_LEADERSHIPLOCKPATH: /eventuate/cdc/leader/common
+      EVENTUATE_CDC_READER_READER1_CDCDBUSERNAME: root
+      EVENTUATE_CDC_READER_READER1_CDCDBPASSWORD: "Root@@123"
+      EVENTUATE_CDC_READER_READER1_READOLDDEBEZIUMDBOFFSETSTORAGETOPIC: "false"
+      EVENTUATE_CDC_READER_READER1_MYSQLBINLOGCLIENTUNIQUEID: 1234567890
+      EVENTUATE_CDC_READER_READER1_OFFSETSTOREKEY: MySqlBinlog
+      EVENTUATE_CDC_READER_READER1_OFFSETSTORAGETOPICNAME: db.history.common
+      EVENTUATE_CDC_READER_READER1_OUTBOXID: 1
+      JAVA_OPTS: -Xmx64m
+#    logging:
+#      driver: "fluentd"
+#      options:
+#        fluentd-address: localhost:24224
+#        tag: cdc-service
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:16.1.0
+    environment:
+      DB_VENDOR: mariadb
+      DB_ADDR: mariadb
+      DB_DATABASE: keycloak
+      DB_USER: mysqluser
+      DB_PASSWORD: "Mysqlpw@@123"
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: Pa55w0rd
+    ports:
+      - '8080:8080'
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      - mariadb
+#    logging:
+#      driver: "fluentd"
+#      options:
+#        fluentd-address: localhost:24224
+#        tag: keycloak
+
+  order-service:
+    image: docker.io/makalaoscar/oscar-docker:cr-order-service
+    hostname: order-service
+    ports:
+      - "9876:9876"
+    depends_on:
+      - mariadb
+      - kafka
+      - cdc-service
+    environment:
+      spring.datasource.hikari.max-lifetime: 580000
+      notification_voucher_used_sw: Ndugu mteja namba yako ya bahati imeshatumika.Endelea kununua vinywaji vya Azam uweze kupata rejesho kwenye akaunti yako ya Azampesa
+      SPRING_DATASOURCE_URL: jdbc:mysql://mariadb/cr_order_service
+      SPRING_DATASOURCE_USERNAME: cr_order_service_user
+      SPRING_DATASOURCE_PASSWORD: cr_order_service_password
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+      EVENTUATE_DATABASE_SCHEMA: cr_order_service
+      SPRING_SLEUTH_ENABLED: "true"
+      SPRING_SLEUTH_SAMPLER_PROBABILITY: 1
+      SPRING.SECURITY.OAUTH2.RESOURCESERVER.JWT.JWK-SET-URI: http://keycloak:8080/auth/realms/azamCodeRedemption/protocol/openid-connect/certs
+#    logging:
+#      driver: "fluentd"
+#      options:
+#        fluentd-address: localhost:24224
+#        tag: order-service
+
+  voucher-service:
+    image: docker.io/makalaoscar/oscar-docker:cr-voucher-service
+    hostname: voucher-service
+    ports:
+      - "9877:9877"
+    depends_on:
+      - mariadb
+      - kafka
+      - cdc-service
+    environment:
+      spring.datasource.hikari.max-lifetime: 580000
+      SPRING_DATASOURCE_URL: jdbc:mysql://mariadb/cr_voucher_service
+      SPRING_DATASOURCE_USERNAME: cr_voucher_service_user
+      SPRING_DATASOURCE_PASSWORD: cr_voucher_service_password
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+      EVENTUATE_DATABASE_SCHEMA: cr_voucher_service
+      SPRING.SECURITY.OAUTH2.RESOURCESERVER.JWT.JWK-SET-URI: http://keycloak:8080/auth/realms/azamCodeRedemption/protocol/openid-connect/certs
+#    logging:
+#      driver: "fluentd"
+#      options:
+#        fluentd-address: localhost:24224
+#        tag: voucher-service
+
+  account-service:
+    image: makalaoscar/oscar-docker:cr-account-service
+    hostname: account-service
+    expose:
+      - "9878"
+    depends_on:
+      - mariadb
+      - kafka
+      - cdc-service
+    environment:
+      logging.level.org.springframework.orm.jpa: INFO
+      logging.level.org.hibernate.SQL: INFO
+      logging.level.io.eventuate: INFO
+      logging.level.io.eventuate.tram: INFO
+      logging.level.com.divforce.cr: INFO
+      spring.datasource.hikari.max-lifetime: 580000
+      SPRING_DATASOURCE_URL: jdbc:mysql://mariadb/cr_account_service
+      SPRING_DATASOURCE_USERNAME: cr_account_service_user
+      SPRING_DATASOURCE_PASSWORD: cr_account_service_password
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+      EVENTUATE_DATABASE_SCHEMA: cr_account_service
+      SPRING.SECURITY.OAUTH2.RESOURCESERVER.JWT.JWK-SET-URI: http://keycloak:8080/auth/realms/azamCodeRedemption/protocol/openid-connect/certs
+      VENDORS_DISBURSEMENT_ENDPOINT: https://172.16.1.6:8243/codedisburse/1.0.0
+      VENDORS_DISBURSEMENT_HEADERS_Authorization: Bearer 0878044f-a543-3760-8b7e-b48213052ac5
+      VENDORS_DISBURSEMENT_TEMPLATE: |
+        {"serviceCode":"CODEDISB","bearerCode":"USSD","transactionAmount":"#{amount}","currency":"101","externalReferenceId":"#{transactionId}","source":"CODE_REDEMPTION","remarks":"Codedisburse","transactionMode":"Codedisburse","initiator":"transactor","language":"sw","transactor":{"idType":"mobileNumber","idValue":"780100100","productId":"12","mpin":"1357","tpin":"1357"},"receiver":{"idType":"mobileNumber","idValue":"#{mobile}","productId":"12"}}
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: localhost:24224
+        tag: account-service
+
+  api-gateway:
+    image: docker.io/makalaoscar/oscar-docker:cr-api-gateway
+    container_name: coderedemption-api-gateway
+    ports:
+      - "7070:7070"
+    depends_on:
+      - keycloak
+    environment:
+      spring.security.oauth2.client.registration.keycloak.client-secret: Fc6h3G4eMLtTMMoMbQrKp3yw7wX1BMR3
+      spring.security.oauth2.client.provider.keycloak.issuer-uri: http://172.16.115.5:8080/auth/realms/azamCodeRedemption
+      SPRING.CLOUD.GATEWAY.ROUTES[0].ID: voucher_path
+      SPRING.CLOUD.GATEWAY.ROUTES[0].URI: http://voucher-service:9877
+      SPRING.CLOUD.GATEWAY.ROUTES[0].PREDICATES[0]: Path=/campaigns/**,/vouchers/**
+      SPRING.CLOUD.GATEWAY.ROUTES[0].FILTERS[0]: TokenRelay=
+      SPRING.CLOUD.GATEWAY.ROUTES[0].FILTERS[1]: RemoveRequestHeader=Cookie
+
+
+      SPRING.CLOUD.GATEWAY.ROUTES[1].ID: user_path
+      SPRING.CLOUD.GATEWAY.ROUTES[1].URI: http://user-service:2678
+      SPRING.CLOUD.GATEWAY.ROUTES[1].PREDICATES[0]: Path=/security/**
+      SPRING.CLOUD.GATEWAY.ROUTES[1].FILTERS[0]: TokenRelay=
+      SPRING.CLOUD.GATEWAY.ROUTES[1].FILTERS[1]: RemoveRequestHeader=Cookie
+
+      SPRING.CLOUD.GATEWAY.ROUTES[2].ID: voucher_history
+      SPRING.CLOUD.GATEWAY.ROUTES[2].URI: http://voucher-history-service:3333
+      SPRING.CLOUD.GATEWAY.ROUTES[2].PREDICATES[0]: Path=/voucher-history/**
+      SPRING.CLOUD.GATEWAY.ROUTES[2].FILTERS[0]: TokenRelay=
+      SPRING.CLOUD.GATEWAY.ROUTES[2].FILTERS[1]: RemoveRequestHeader=Cookie
+
+      SPRING.CLOUD.GATEWAY.ROUTES[3].ID: payment_path
+      SPRING.CLOUD.GATEWAY.ROUTES[3].URI: http://account-service:9878
+      SPRING.CLOUD.GATEWAY.ROUTES[3].PREDICATES[0]: Path=/payments/**
+      SPRING.CLOUD.GATEWAY.ROUTES[3].FILTERS[0]: TokenRelay=
+      SPRING.CLOUD.GATEWAY.ROUTES[3].FILTERS[1]: RemoveRequestHeader=Cookie
+
+      SPRING.CLOUD.GATEWAY.ROUTES[4].ID: order_path
+      SPRING.CLOUD.GATEWAY.ROUTES[4].URI: http://order-service:9876
+      SPRING.CLOUD.GATEWAY.ROUTES[4].PREDICATES[0]: Path=/orders/**
+      SPRING.CLOUD.GATEWAY.ROUTES[4].FILTERS[0]: TokenRelay=
+      SPRING.CLOUD.GATEWAY.ROUTES[4].FILTERS[1]: RemoveRequestHeader=Cookie
+#    logging:
+#      driver: "fluentd"
+#      options:
+#        fluentd-address: localhost:24224
+#        tag: api-gateway
+  notification-service:
+    image: makalaoscar/oscar-docker:cr-notification-service
+    hostname: notification-service
+    expose:
+      - "9875"
+    depends_on:
+      - mariadb
+      - kafka
+      - cdc-service
+    environment:
+      spring.datasource.hikari.max-lifetime: 580000
+      SPRING_DATASOURCE_URL: jdbc:mysql://mariadb/cr_notification_service
+      SPRING_DATASOURCE_USERNAME: cr_notification_service_user
+      SPRING_DATASOURCE_PASSWORD: cr_notification_service_password
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.jdbc.Driver
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+      EVENTUATE_DATABASE_SCHEMA: cr_notification_service
+      NOTIFICATION_ENDPOINT: https://g8x2j.api.infobip.com/sms/2/text/advanced
+      SPRING.SECURITY.OAUTH2.RESOURCESERVER.JWT.JWK-SET-URI: http://keycloak:8080/auth/realms/azamCodeRedemption/protocol/openid-connect/certs
+#    logging:
+#      driver: "fluentd"
+#      options:
+#        fluentd-address: localhost:24224
+#        tag: notification-service
+
+  user-service:
+    image: docker.io/makalaoscar/oscar-docker:cr-user-service
+    ports:
+      - "2678:2678"
+    environment:
+      SPRING.SECURITY.OAUTH2.RESOURCESERVER.JWT.JWK-SET-URI: http://keycloak:8080/auth/realms/azamCodeRedemption/protocol/openid-connect/certs
+#    logging:
+#      driver: "fluentd"
+#      options:
+#        fluentd-address: localhost:24224
+#        tag: user-service
+
+  voucher-history-service:
+    image: docker.io/makalaoscar/oscar-docker:cr-voucher-history-service
+    container_name: coderedemption-voucher-history-service
+    ports:
+      - "3333:3333"
+    depends_on:
+      - kafka
+    environment:
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+      SPRING.SECURITY.OAUTH2.RESOURCESERVER.JWT.JWK-SET-URI: http://keycloak:8080/auth/realms/azamCodeRedemption/protocol/openid-connect/certs
+      SPRING.DATA.MONGODB.URI: mongodb://mongo:27017/VoucherHistoryDb
+#    logging:
+#      driver: "fluentd"
+#      options:
+#        fluentd-address: localhost:24224
+#        tag: voucher-history-service
+  mongo:
+    image: mongo:5.0.6
+    hostname: mongo
+    command: --wiredTigerCacheSizeGB 3
+    ports:
+      - '27017:27017'
+    volumes:
+      - /opt/coderedemption/mongod:/data/db
+  mongoexpress:
+    image: mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://mongo:27017/VoucherHistoryDb
+
+#  fluentd:
+#    image: docker.io/makalaoscar/oscar-docker:fluentd
+#    volumes:
+#      - /opt/coderedemption/fluentd/conf:/fluentd/etc
+#    depends_on:
+#      - elasticsearch
+#    ports:
+#      - "24224:24224"
+#      - "24224:24224/udp"
+#  #https://www.elastic.co/guide/en/elasticsearch/reference/8.1/docker.html
+#  elasticsearch:
+#    image: elasticsearch:8.1.2
+#    container_name: es01
+#    volumes:
+#      - /opt/coderedemption/esdata:/usr/share/elasticsearch/data
+#    environment:
+#      - node.name=es01
+#      - cluster.name=es-docker-cluster
+#      - bootstrap.memory_lock=true
+#      - cluster.initial_master_nodes=es01
+#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+#      - xpack.security.enabled=false
+#    ulimits:
+#      memlock:
+#        soft: -1
+#        hard: -1
+#    deploy:
+#      resources:
+#        limits:
+#          memory: 1g
+#    expose:
+#      - 9200
+#    ports:
+#      - "9200:9200"
+#  kibana:
+#    image: kibana:8.1.2
+#    depends_on:
+#      - "elasticsearch"
+#    volumes:
+#      - /opt/coderedemption/kibanadata:/usr/share/kibana/data
+#    environment:
+#      - SERVERNAME=kibana
+#      - ELASTICSEARCH_URL=http://es01:9200
+#      - ELASTICSEARCH_HOST=http://es01:9200
+#    ports:
+#      - "5601:5601"
+#    healthcheck:
+#      test:
+#        [
+#          "CMD-SHELL",
+#          "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+#        ]
+#      interval: 10s
+#      timeout: 10s
+#      retries: 120

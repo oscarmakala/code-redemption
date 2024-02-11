@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: code-redemption
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - image: localhost:5000/cr-mysql
+          name: mysql
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: rootpassword
+            - name: MYSQL_USER
+              value: mysqluser
+            - name: MYSQL_PASSWORD
+              value: mysqlpw
+            - name: USE_DB_ID
+              value: "true"
+          ports:
+            - containerPort: 3306
+              name: mysql
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+          args:
+            - "--ignore-db-dir=lost+found"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mysql-claim

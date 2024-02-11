@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cr-cdc-service
+  namespace: code-redemption
+  labels:
+    app: cr-cdc-service
+spec:
+  selector:
+    matchLabels:
+      app: cr-cdc-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: cr-cdc-service
+    spec:
+      containers:
+        - name: cr-cdc-service
+          image: eventuateio/eventuate-cdc-service
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: httpport
+          livenessProbe:
+            httpGet:
+              path: /actuator
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /actuator
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          command: [ "bash", "-c", "java -Dsun.net.inetaddr.ttl=30 -jar *.jar" ]
+          env:
+            - name: JAVA_OPTS
+              value: "-Dsun.net.inetaddr.ttl=30"
+            - name: EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS
+              value: kafka:9092
+            - name: EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING
+              value: zookeeper:2181
+            - name: EVENTUATE_CDC_PIPELINE_PIPELINE1_TYPE
+              value: eventuate-tram
+            - name: EVENTUATE_CDC_PIPELINE_PIPELINE1_READER
+              value: reader1
+            - name: EVENTUATE_CDC_PIPELINE_PIPELINE1_EVENTUATEDATABASESCHEMA
+              value: cr_voucher_service
+            - name: EVENTUATE_CDC_PIPELINE_PIPELINE2_TYPE
+              value: eventuate-tram
+            - name: EVENTUATE_CDC_PIPELINE_PIPELINE2_READER
+              value: reader1
+            - name: EVENTUATE_CDC_PIPELINE_PIPELINE2_EVENTUATEDATABASESCHEMA
+              value: cr_order_service
+            - name: EVENTUATE_CDC_PIPELINE_PIPELINE3_TYPE
+              value: eventuate-tram
+            - name: EVENTUATE_CDC_PIPELINE_PIPELINE3_READER
+              value: reader1
+            - name: EVENTUATE_CDC_PIPELINE_PIPELINE3_EVENTUATEDATABASESCHEMA
+              value: cr_account_service
+            - name: EVENTUATE_CDC_PIPELINE_PIPELINE4_TYPE
+              value: eventuate-tram
+            - name: EVENTUATE_CDC_PIPELINE_PIPELINE4_READER
+              value: reader1
+            - name: EVENTUATE_CDC_PIPELINE_PIPELINE4_EVENTUATEDATABASESCHEMA
+              value: cr_notification_service
+            - name: EVENTUATE_CDC_READER_READER1_TYPE
+              value: mysql-binlog
+            - name: EVENTUATE_CDC_READER_READER1_DATASOURCEURL
+              value: jdbc:mysql://mysql:3306/eventuate
+            - name: EVENTUATE_CDC_READER_READER1_DATASOURCEUSERNAME
+              value: root
+            - name: EVENTUATE_CDC_READER_READER1_DATASOURCEPASSWORD
+              value: rootpassword
+            - name: EVENTUATE_CDC_READER_READER1_DATASOURCEDRIVERCLASSNAME
+              value: com.mysql.jdbc.Driver
+            - name: EVENTUATE_CDC_READER_READER1_LEADERSHIPLOCKPATH
+              value: /eventuate/cdc/leader/common
+            - name: EVENTUATE_CDC_READER_READER1_CDCDBUSERNAME
+              value: root
+            - name: EVENTUATE_CDC_READER_READER1_CDCDBPASSWORD
+              value: rootpassword
+            - name: EVENTUATE_CDC_READER_READER1_READOLDDEBEZIUMDBOFFSETSTORAGETOPIC
+              value: "false"
+            - name: EVENTUATE_CDC_READER_READER1_MYSQLBINLOGCLIENTUNIQUEID
+              value: "1"
+            - name: EVENTUATE_CDC_READER_READER1_OFFSETSTOREKEY
+              value: MySqlBinlog
+            - name: EVENTUATE_CDC_READER_READER1_OFFSETSTORAGETOPICNAME
+              value: db.history.common
+      initContainers:
+        - name: init-mysql-wait
+          image: busybox
+          command: [ 'sh', '-c', 'until nc -w3 -z mysql 3306; do echo waiting for mysql; sleep 3; done;' ]

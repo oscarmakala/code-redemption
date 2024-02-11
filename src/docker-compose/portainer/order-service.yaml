@@ -1,0 +1,39 @@
+version: '3.8'
+services:
+
+  order-service-mysql:
+    image: eventuateio/eventuate-vanilla-mysql8:0.18.0.BUILD-SNAPSHOT
+    networks:
+      - coderedemption
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_USER=mysqluser
+      - MYSQL_PASSWORD=mysqlpw
+      - EVENTUATE_OUTBOX_TABLES=${EVENTUATE_OUTBOX_TABLES}
+      - MYSQL_DATABASE=order_service
+    volumes:
+      - /mysql/order:/var/lib/mysql
+  order-service:
+    image: ghcr.io/azampay-ltd/code-redemption/cr-order-service:1.0
+    depends_on:
+      - order-service-mysql
+      - kafka
+      - zookeeper
+    ports:
+      - "9876:9876"
+    networks:
+      - coderedemption
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://order-service-mysql/order_service
+      SPRING_DATASOURCE_USERNAME: mysqluser
+      SPRING_DATASOURCE_PASSWORD: mysqlpw
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+      EVENTUATE_TRAM_OUTBOX_PARTITIONING_OUTBOX_TABLES: ${EVENTUATE_OUTBOX_TABLES}
+      EVENTUATE_DATABASE_SCHEMA: none
+      notification_voucher_used_sw: Ndugu mteja namba yako ya bahati imeshatumika.Endelea kununua vinywaji vya Azam uweze kupata rejesho kwenye akaunti yako ya Azampesa
+      SPRING.SECURITY.OAUTH2.RESOURCESERVER.JWT.JWK-SET-URI: http://keycloak:8080/auth/realms/azamCodeRedemption/protocol/openid-connect/certs
+networks:
+  coderedemption:
+    external: true
